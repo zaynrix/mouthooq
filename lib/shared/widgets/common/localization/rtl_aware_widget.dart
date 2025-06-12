@@ -1,6 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as m;
+import 'package:mouthooq/utils/enums/supported_language.dart';
+import 'package:mouthooq/utils/extensions/easy_localization_extensions.dart';
+import 'package:mouthooq/utils/localization/language_utils.dart';
 import '../../../../resources/constants/supported_locales.dart';
 class RTLAwareWidget extends StatelessWidget {
   final Widget child;
@@ -14,11 +17,21 @@ class RTLAwareWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isRTL = SupportedLocales.isRTL(context.locale.languageCode);
+    final language = SupportedLanguage.fromCode(context.languageCode);
 
     return Directionality(
-      textDirection: isRTL ? m.TextDirection.rtl : m.TextDirection.ltr,
-      child: rtlChild != null && isRTL ? rtlChild! : child,
+      textDirection: language.textDirection,
+      child: Padding(
+        padding: LanguageUtils.getDirectionalPadding(
+          language,
+          left: 16,
+          right: 8,
+        ),
+        child: Text(
+          'welcome'.tr(),
+          textAlign: LanguageUtils.getTextAlign(language),
+        ),
+      ),
     );
   }
 }

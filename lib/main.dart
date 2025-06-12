@@ -1,14 +1,22 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mouthooq/resources/constants/supported_locales.dart';
-import 'package:mouthooq/resources/themes/app_theme.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:mouthooq/shared/providers/locale_provider.dart';
+import 'router/app_router.dart';
+import 'resources/themes/app_theme.dart';
+import 'shared/providers/theme_provider.dart';
+import 'resources/constants/supported_locales.dart';
+import 'app_config/environment.dart';
+import 'utils/logging/app_logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Easy Localization
   await EasyLocalization.ensureInitialized();
+
+  // Print theme info in debug mode
+  AppTheme.printThemeInfo();
 
   runApp(
     EasyLocalization(
@@ -23,18 +31,40 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      locale: const Locale('ar', 'AR'),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+    final locale = ref.watch(localeProvider);
+    final themeMode = ref.watch(themeProvider);
+
+    // Log theme and locale changes
+    AppLogger.info('App rendered', extra: {
+      'locale': locale.languageCode,
+      'theme': themeMode.name,
+      'isRTL': SupportedLocales.isRTL(locale.languageCode),
+    });
+
+    return MaterialApp.router(
+      title: 'app_title'.tr(),
+
+      // Localization Configuration
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
+
+      // Theme Configuration with Locale Support
+      theme: AppTheme.getLightTheme(locale),
+      darkTheme: AppTheme.getDarkTheme(locale),
+      themeMode: themeMode,
+
+      // Router Configuration
+      routerConfig: router,
+
+      // Debug Configuration
+      debugShowCheckedModeBanner: !EnvironmentConfig.isProduction,
     );
   }
 }
@@ -62,6 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _incrementCounter() {
     setState(() {
+      AppLogger.info('User created successfully', tag: 'API');
       // This call to setState tells the Flutter framework that something has
       // changed in this State, which causes it to rerun the build method below
       // so that the display can reflect the updated values. If we changed
